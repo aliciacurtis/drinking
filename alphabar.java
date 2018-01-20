@@ -42,6 +42,11 @@ public class alphabar
         /* Okay, so now I have my arrays of bar choices, and I generate my letter. I then want to use that letter to access
         the appropriate array, generate a new number based on that array's length, and pick a bar. But the char "B" is different
         from an array of strings called B. Can I get them to talk to each other? */
+        
+        // Here's an example, pretending the letter chosen was V. Not super clean, I know, but just making my point:
+        
+        double i = Math.random() * V.length;
+        System.out.println("We're going to " + V[(int)i] + "!");
     }
     
     public static char chooser()
