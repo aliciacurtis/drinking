@@ -38,6 +38,7 @@ def get_distance(dest) :
     - 0 == found a destination, value is distance in meters
     - -1 == could not find the value field on a leg with a distance
     - -2 == could not find a route or a leg
+    - -3 == legs found but no distance, dunno why this would happen
 
   DIST is 0 if STATUS != 0. VALUE is the end address if status == 0.
   '''
@@ -55,12 +56,15 @@ def get_distance(dest) :
     distance = legs[0].get('distance')
     if not distance :
       return -3,dist,'legs found, but no distance, wtflolzers?'
-    dist = distance.get('value')
 
+    dist = distance.get('value')
     end_address = legs[0].get('end_address')
+
     return status,dist,end_address
 
 if __name__ == '__main__' :
+
+  print(__doc__)
 
   with request.urlopen(alpha_url) as r :
     for r in csv.reader(r.read().decode().split('\n')) :
