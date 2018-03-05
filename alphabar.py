@@ -34,19 +34,31 @@ def get_distance(dest) :
   Accesses the google maps web service api to find the distance between the
   origin defined on the script level and a destination string.
 
-  Lazily bails when the json doesn't conform to a successful result:
+  Return value is a tuple with (STATUS, DIST, VALUE). STATUS is as follows:
+    - 0 == found a destination, value is distance in meters
     - -1 == could not find the value field on a leg with a distance
     - -2 == could not find a route or a leg
+
+  DIST is 0 if STATUS != 0. VALUE is the end address if status == 0.
   '''
   url = api_url.format(origin=origin,dest=encode_param(dest))
   with request.urlopen(url) as r :
     dir_json = json.loads(r.read().decode())
-    try :
-      # dirty dirty dirty dirty don't do this this way dirty dirty
-      dist = dir_json.get('routes',[{}])[0].get('legs',[{}])[0].get('distance',{}).get('value',-1)
-    except IndexError:
-      dist = -2
-    return dist
+    status, dist = 0, 0
+
+    routes = dir_json.get('routes')
+    if not routes :
+      return -1,dist,'no routes found, not sure how to help you here'
+    legs = routes[0].get('legs')
+    if not legs :
+      return -2,dist,'no legs for route, not sure how to help you here'
+    distance = legs[0].get('distance')
+    if not distance :
+      return -3,dist,'legs found, but no distance, wtflolzers?'
+    dist = distance.get('value')
+
+    end_address = legs[0].get('end_address')
+    return status,dist,end_address
 
 if __name__ == '__main__' :
 
@@ -55,10 +67,15 @@ if __name__ == '__main__' :
       print('letter',r[0])
       for place in r[1:] :
         if place != '' :
-          dist = get_distance(place)
-          if dist < 0 :
-            print(place,'could not be easily found by the googz from here')
+          status, dist, msg = get_distance(place)
+
+          # distance is reported in meters (FEH)
+          # 1609 meters ~= 1 mile
+          miles = dist/1609
+
+          if status < 0 :
+            print(place,'could not be easily found by the googz from here:',msg)
+          elif miles > 20 :
+            print(place,'is {:.2f} miles away,'.format(miles),'prolly not where we meant:',msg)
           else :
-            # distance is reported in meters (FEH)
-            # 1609 meters ~= 1 mile
-            print(place,':','{:.2f}'.format(dist/1609),'mi')
+            print(place,':','{:.2f}'.format(miles),'mi')
